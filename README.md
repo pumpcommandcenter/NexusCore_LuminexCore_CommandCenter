@@ -216,4 +216,139 @@ BASE_RPC_URL=https://mainnet.base.org' > .env
 # 3. Deploy to Base
 npx hardhat run scripts/deploy.ts --network base
 defaultOutputTokenAddress="0xYourDeployedWrappedNewTokenAddress"
+{/* Bonding Curve Progress */}
+<div className="mt-8">
+  <div className="flex justify-between text-sm mb-2">
+    <span>Bonding Curve Progress</span>
+    <span className="font-mono">{progress.toFixed(1)}%</span>
+  </div>
+  
+  <div className="w-full bg-zinc-800 rounded-full h-4 overflow-hidden border border-pink-600">
+    <div 
+      className="h-4 rounded-full transition-all duration-500"
+      style={{ 
+        width: `${progress}%`,
+        background: progress > 80 ? 'linear-gradient(to right, #22c55e, #eab308)' : 'linear-gradient(to right, #ec4899, #a855f7)'
+      }}
+    />
+  </div>
+
+  <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+    <div>SOL Raised: <span className="font-mono text-pink-400">{currentRaised.toFixed(2)} / {targetMarketCap}</span></div>
+    <div>Est. Market Cap: <span className="font-mono text-pink-400">${(parseFloat(targetMarketCap) * (progress / 100)).toFixed(0)}</span></div>
+  </div>
+</div>
+cd base-oft-deployment
+
+npm install
+
+# Deploy
+npx hardhat run scripts/deployOFT.ts --network base
+import { ethers } from "hardhat";
+
+async function main() {
+  const [deployer] = await ethers.getSigners();
+
+  // === CONFIGURE THESE VALUES ===
+  const oftAddress = "0xYourDeployedMyOFTAddress";           // From deployOFT.ts
+  const remoteEid = 30168;                                   // Solana Mainnet EID (LayerZero V2)
+  const remoteOFT = "YourSolanaOFTAddressOrProgramId";       // Solana side address
+
+  // Convert to bytes32
+  const peer = ethers.zeroPadValue(ethers.toBeHex(remoteOFT), 32);
+
+  console.log("Setting peer on MyOFT contract...");
+  console.log("OFT Address:     ", oftAddress);
+  console.log("Remote EID:      ", remoteEid);
+  console.log("Remote Peer:     ", peer);
+
+  const MyOFT = await ethers.getContractFactory("MyOFT");
+  const oft = MyOFT.attach(oftAddress);
+
+  const tx = await oft.setPeer(remoteEid, peer);
+  await tx.wait();
+
+  console.log("✅ Peer set successfully!");
+  console.log("Transaction hash:", tx.hash);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
+npx hardhat run scripts/deployOFT.ts --network base
+npx hardhat run scripts/setPeer.ts --network base
+npx hardhat run scripts/setLibraries.ts --network base
+git clone https://github.com/LayerZero-Labs/devtools.git
+cd examples/oft-solana
+solana account <address> --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+{
+  "chain": "solana",
+  "amount": 1250,
+  "txHash": "5xK...",
+  "token": "NEW",
+  "isToken2022": true,
+  "success": true
+}
+<WormholeConnect
+  config={{
+    tokens: {
+      NEW_TOKEN: {
+        solana: {
+          address: "EyCMRsiSxbLRspptLHNqqMQG8HB2oTZSPWRyWJqXpump",
+          tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" // ← Required
+        }
+      }
+    }
+  }}
+/>
+{
+  "token": "NEW",
+  "isToken2022": true
+}
+const payload = {
+  chain: "base-bridge",
+  amount: 1250,
+  token: "NEW",
+  isToken2022: true,
+  isHighValue: true
+};
+
+const hybridSig = await hybridDilithiumSign(JSON.stringify(payload), dilithiumPrivateKey);
+
+await fetch('/api/record-trade', {
+  method: 'POST',
+  body: JSON.stringify({
+    ...payload,
+    pqcSignature: hybridSig
+  })
+});
+{
+  "chain": "base-bridge",
+  "amount": 25000,
+  "token": "NEW",
+  "isToken2022": true,
+  "isHighValue": true,
+  "classicalSignature": "5f3a...",
+  "pqcSignature": "a1b2c3...",
+  "publicKey": "ed25519_pubkey...",
+  "pqcPublicKey": "dilithium_pubkey..."
+}
+{
+import { prepareHighValueRequest } from '../utils/hybridSigner';
+
+const payload = {
+  name: launchName,
+  symbol: launchSymbol,
+  initialBuy: parseFloat(initialBuyAmount),
+  wallet: publicKey.toBase58()
+};
+
+const signedPayload = await prepareHighValueRequest(payload, yourEd25519PrivateKey);
+
+// Then send to /api/record-launch
+await fetch('/api/record-launch', {
+  method: 'POST',
+  body: JSON.stringify(signedPayload)
+});
 
