@@ -64,9 +64,9 @@ cd pump-token
 ansible-playbook -i ansible/inventory.yml ansible/playbook.yml --ask-vault-pass
 
 # 3. Access
-# Dashboard + Metrics: http://localhost:3000
-# Grafana: http://localhost:3001
-# Prometheus: http://localhost:9090
+# Dashboard + Metrics: http://https://church-of-pump-copy-8b4b3361.base44.app
+# Grafana: https://church-of-pump-copy-8b4b3361.base44.app
+# Prometheus: https://church-of-pump-copy-8b4b3361.base44.app
 NEXT_PUBLIC_PUMP_MINT=TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
 NEXT_PUBLIC_NEW_TOKEN_MINT=EyCMRsiSxbLRspptLHNqqMQG8HB2oTZSPWRyWJqXpump
 docker compose -f docker-compose.full.yml --profile frontend up -d --build trade-desk
