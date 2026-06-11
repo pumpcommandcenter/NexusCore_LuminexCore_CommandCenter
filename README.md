@@ -351,4 +351,267 @@ await fetch('/api/record-launch', {
   method: 'POST',
   body: JSON.stringify(signedPayload)
 });
+const signedPayload = await prepareHighValueRequest(
+  payload,
+  'YOUR_ED25519_PRIVATE_KEY_HERE'   // ← Replace with real key
+);
+
+const res = await fetch('/api/record-launch', {
+  method: 'POST',
+  body: JSON.stringify(signedPayload)
+});
+async function getDilithium(): Promise<DilithiumWasm> {
+  if (!dilithiumModule) {
+    // === REAL IMPLEMENTATION ===
+    // Option A: Use a pre-built WASM bundle
+    // const module = await import('/wasm/dilithium.js');
+    // dilithiumModule = module;
+
+    // Option B: Use a CDN / npm package like 'dilithium-wasm'
+    // const { init, sign, verify } = await import('dilithium-wasm');
+    // await init();
+    // dilithiumModule = { sign, verify, keypair: ... };
+
+    // For now it falls back to mock (replace this block)
+    dilithiumModule = { /* real implementation here */ };
+  }
+  return dilithiumModule;
+}
+{
+  "name": "MyNewToken",
+  "symbol": "MNT",
+  "initialBuy": 0.5,
+  "isHighValue": true,
+  "pqcAlgorithm": "Dilithium2",
+  "classicalSignature": "...",
+  "pqcSignature": "...",
+  "publicKey": "...",
+  "pqcPublicKey": "..."
+}
+// hybridSigner.ts - Dilithium2 WASM Ready Version
+
+import * as ed from '@noble/ed25519';
+
+// === Real Dilithium2 WASM Module ===
+let dilithium2: any = null;
+
+async function initDilithium2() {
+  if (!dilithium2) {
+    // Path to your built WASM module
+    const module = await import('/wasm/dilithium2/dilithium2_wasm.js');
+    await module.default(); // Initialize WASM
+    dilithium2 = module;
+  }
+  return dilithium2;
+}
+
+interface HybridSignatureResult {
+  classicalSignature: string;
+  pqcSignature: string;
+  publicKey: string;
+  pqcPublicKey: string;
+}
+
+export async function generateHybridSignature(
+  message: any,
+  ed25519PrivateKey: string | Uint8Array
+): Promise<HybridSignatureResult> {
+  const messageString = typeof message === 'string' ? message : JSON.stringify(message);
+  const messageBytes = new TextEncoder().encode(messageString);
+
+  // 1. Classical Ed25519
+  const classicalSig = await ed.sign(messageBytes, Buffer.from(ed25519PrivateKey));
+  const publicKey = Buffer.from(await ed.getPublicKey(Buffer.from(ed25519PrivateKey))).toString('hex');
+
+  // 2. Dilithium2 (Real WASM)
+  const d2 = await initDilithium2();
+  const pqcSig = await d2.sign(messageBytes, /* real Dilithium2 private key */);
+  const pqcPublicKey = /* real Dilithium2 public key */;
+
+  return {
+    classicalSignature: Buffer.from(classicalSig).toString('hex'),
+    pqcSignature: Buffer.from(pqcSig).toString('hex'),
+    publicKey,
+    pqcPublicKey
+  };
+}
+
+export async function prepareHighValueRequest(payload: any, ed25519PrivateKey: string | Uint8Array) {
+  const hybridSig = await generateHybridSignature(payload, ed25519PrivateKey);
+
+  return {
+    ...payload,
+    ...hybridSig,
+    isHighValue: true,
+    pqcAlgorithm: 'Dilithium2'
+  };
+}
+// hybridSigner.ts - Dilithium2 WASM Ready Version
+
+import * as ed from '@noble/ed25519';
+
+// === Real Dilithium2 WASM Module ===
+let dilithium2: any = null;
+
+async function initDilithium2() {
+  if (!dilithium2) {
+    // Path to your built WASM module
+    const module = await import('/wasm/dilithium2/dilithium2_wasm.js');
+    await module.default(); // Initialize WASM
+    dilithium2 = module;
+  }
+  return dilithium2;
+}
+
+interface HybridSignatureResult {
+  classicalSignature: string;
+  pqcSignature: string;
+  publicKey: string;
+  pqcPublicKey: string;
+}
+
+export async function generateHybridSignature(
+  message: any,
+  ed25519PrivateKey: string | Uint8Array
+): Promise<HybridSignatureResult> {
+  const messageString = typeof message === 'string' ? message : JSON.stringify(message);
+  const messageBytes = new TextEncoder().encode(messageString);
+
+  // 1. Classical Ed25519
+  const classicalSig = await ed.sign(messageBytes, Buffer.from(ed25519PrivateKey));
+  const publicKey = Buffer.from(await ed.getPublicKey(Buffer.from(ed25519PrivateKey))).toString('hex');
+
+  // 2. Dilithium2 (Real WASM)
+  const d2 = await initDilithium2();
+  const pqcSig = await d2.sign(messageBytes, /* real Dilithium2 private key */);
+  const pqcPublicKey = /* real Dilithium2 public key */;
+
+  return {
+    classicalSignature: Buffer.from(classicalSig).toString('hex'),
+    pqcSignature: Buffer.from(pqcSig).toString('hex'),
+    publicKey,
+    pqcPublicKey
+  };
+}
+
+export async function prepareHighValueRequest(payload: any, ed25519PrivateKey: string | Uint8Array) {
+  const hybridSig = await generateHybridSignature(payload, ed25519PrivateKey);
+
+  return {
+    ...payload,
+    ...hybridSig,
+    isHighValue: true,
+    pqcAlgorithm: 'Dilithium2'
+  };
+}
+const signedPayload = await prepareHighValueRequest(payload, ed25519PrivateKey);
+// Singleton cache
+let dilithiumModule: Dilithium2Wasm | null = null;
+
+// Preload function (call on tab switch)
+export async function preloadDilithium2(): Promise<void> {
+  if (!dilithiumModule) {
+    await getDilithium2();
+  }
+}
+
+// Parallel hybrid signing
+export async function generateHybridSignature(...) {
+  const [classicalSig, pqcSig] = await Promise.all([
+    ed.sign(...),
+    dilithium2.sign(...)
+  ]);
+  ...
+}
+// Preload Dilithium2 WASM when user enters Launch tab
+useEffect(() => {
+  if (activeTab === 'launch') {
+    preloadDilithium2();
+  }
+}, [activeTab]);
+// const wasmMemory = new WebAssembly.Memory({ 
+//   initial: 256,   // 16MB
+//   maximum: 512    // 32MB 
+// });
+const worker = initSigningWorker();
+worker.postMessage({ type: 'SIGN', payload: { message, privateKey } });
+React.useEffect(() => {
+  if (activeTab === 'launch') {
+    preloadDilithium2();   // Automatically preloads Dilithium2 WASM
+  }
+}, [Wire Web Worker into signing
+Add Prometheus Perfoemnace metrics 
+Scale and optimize to fit a mobile phones in portrait mode, landscape mode and desktop version I need all the information to fit into base44 app and optimized for the upgrade final deployment packaging
+activeTabconst pqcResult = await new Promise((resolve) => {
+  const w = getWorker();
+  w.onmessage = (e) => resolve(e.data.payload);
+  w.postMessage({ type: 'SIGN', payload: {...} });
+});
+]);
+import performanceRouter from './performance-metrics';
+app.use(performanceRouter);
+.trade-desk {
+  font-size: 16px;           /* Prevent zoom on mobile */
+  -webkit-text-size-adjust: 100%;
+}
+@media (max-width: 768px) {
+  .trade-desk { padding: 1rem; }
+}
+cd xnft-frontend
+npm run build
+chmod +x deploy.sh
+
+./deploy.sh up           # Start full stack (recommended)
+./deploy.sh frontend     # Start only Trade Desk + backend
+./deploy.sh monitoring   # Start only Prometheus + Grafana
+./deploy.sh down         # Stop everything
+./deploy.sh logs         # View logs
+# Start everything (recommended for production)
+docker compose -f docker-compose.base44.yml up -d --build
+
+# Start only Trade Desk + Backend
+docker compose -f docker-compose.base44.yml up -d
+
+# Start with monitoring
+docker compose -f docker-compose.base44.yml --profile monitoring up -d
+
+# Stop everything
+docker compose -f docker-compose.base44.yml down
+NEXT_PUBLIC_SOLANA_RPC=https://api.mainnet-beta.solana.com
+NEXT_PUBLIC_PUMP_MINT=TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+NEXT_PUBLIC_NEW_TOKEN_MINT=EyCMRsiSxbLRspptLHNqqMQG8HB2oTZSPWRyWJqXpump
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
+GRAFANA_ADMIN_PASSWORD=StrongPassword123!
+chmod +x deploy.sh
+./deploy.sh up
+# Domain Configuration
+TRADE_DESK_DOMAIN=tradedesk.yourdomain.com
+BACKEND_DOMAIN=api.yourdomain.com
+GRAFANA_DOMAIN=grafana.yourdomain.com
+
+# Let's Encrypt
+LETSENCRYPT_EMAIL=admin@yourdomain.com
+
+# Existing variables
+NEXT_PUBLIC_SOLANA_RPC=https://api.mainnet-beta.solana.com
+NEXT_PUBLIC_PUMP_MINT=TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
+NEXT_PUBLIC_NEW_TOKEN_MINT=EyCMRsiSxbLRspptLHNqqMQG8HB2oTZSPWRyWJqXpump
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+GRAFANA_ADMIN_PASSWORD=StrongPassword123!
+# 1. Make sure your DNS records point to the server
+#    tradedesk.yourdomain.com  →  Your server IP
+#    api.yourdomain.com        →  Your server IP
+
+# 2. Start the stack with SSL
+docker compose -f docker-compose.base44.yml up -d --build
+
+# 3. Certificates will be automatically issued by Let's Encrypt
+docker compose -f docker-compose.base44.yml -f docker-compose.self-signed.yml up -d --build
+cp .env.example .env
+# Edit your domains and keys
+
+chmod +x deploy.sh
+./deploy.sh up
+
+
 
